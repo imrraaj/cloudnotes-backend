@@ -47,9 +47,9 @@ function Authorize(req, res, next) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    token = req.header('Authorization');
+                    token = req.headers.authorization;
                     if (!token)
-                        return [2 /*return*/, res.status(404).send({ status: false, data: { message: "token invalid" } })];
+                        return [2 /*return*/, res.status(404).send({ status: false, data: { message: "Token does not exist!!" } })];
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
@@ -61,6 +61,7 @@ function Authorize(req, res, next) {
                     return [3 /*break*/, 4];
                 case 3:
                     error_1 = _a.sent();
+                    res.clearCookie();
                     return [2 /*return*/, res
                             .status(401)
                             .json({ status: false, data: { message: "Please authenticate using valid token" } })];

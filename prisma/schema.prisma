@@ -26,17 +26,30 @@ model User {
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @default(now()) @updatedAt @map(name: "updated_at")
 
-  posts Post[]
+  posts      Post[]
+  sharedPost SharedPost[]
 }
 
 model Post {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
   tag         String
   isFavourite Boolean?
-  user        User     @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id])
   userId      String
-  createdAt   DateTime @default(now()) @map(name: "created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map(name: "updated_at")
+  createdAt   DateTime     @default(now()) @map(name: "created_at")
+  updatedAt   DateTime     @default(now()) @updatedAt @map(name: "updated_at")
+  sharedPost  SharedPost[]
+}
+
+model SharedPost {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  Post   Post?  @relation(fields: [postId], references: [id])
+  postId String @db.ObjectId
+
+  accesser User?  @relation(fields: [accessId], references: [id])
+  accessId String
+
+  @@unique([accessId, postId])
 }

@@ -49,6 +49,10 @@ var PostData = zod_1.z.object({
     description: zod_1.z.string().trim(),
     tag: zod_1.z.string().trim(),
 });
+var SharePostData = zod_1.z.object({
+    postId: zod_1.z.string().trim(),
+    username: zod_1.z.string().trim(),
+});
 router.get("/all", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var data, error_1;
     return __generator(this, function (_a) {
@@ -66,6 +70,7 @@ router.get("/all", authMiddleware_1.default, function (req, res) { return __awai
                 return [3 /*break*/, 3];
             case 2:
                 error_1 = _a.sent();
+                console.error(error_1);
                 res
                     .status(500)
                     .json({ status: true, data: { message: "Internal server error" } });
@@ -116,13 +121,12 @@ router.post("/add", authMiddleware_1.default, function (req, res) { return __awa
                             title: data.data.title,
                             description: data.data.description,
                             tag: data.data.tag,
-                            userId: req.user.id
-                        }
+                            userId: req.user.id,
+                        },
                     })];
             case 1:
                 post = _a.sent();
-                return [2 /*return*/, res
-                        .json({ status: true, data: post })];
+                return [2 /*return*/, res.json({ status: true, data: post })];
             case 2:
                 error_3 = _a.sent();
                 return [2 /*return*/, res
@@ -132,7 +136,7 @@ router.post("/add", authMiddleware_1.default, function (req, res) { return __awa
         }
     });
 }); });
-router.put('/update/:id', authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+router.put("/update/:id", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var data, note, error_4;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -151,8 +155,8 @@ router.put('/update/:id', authMiddleware_1.default, function (req, res) { return
                 }
                 return [4 /*yield*/, index_1.prisma.post.findUnique({
                         where: {
-                            id: req.params.id
-                        }
+                            id: req.params.id,
+                        },
                     })];
             case 1:
                 note = _a.sent();
@@ -162,17 +166,19 @@ router.put('/update/:id', authMiddleware_1.default, function (req, res) { return
                             .json({ status: false, data: { message: "Invalid Data!" } })];
                 }
                 if (note.userId !== req.user.id) {
-                    return [2 /*return*/, res.status(401).json({ status: false, data: { message: "Not Allowed!" } })];
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Not Allowed!" } })];
                 }
                 return [4 /*yield*/, index_1.prisma.post.update({
                         where: {
-                            id: req.params.id
+                            id: req.params.id,
                         },
                         data: {
                             title: data.data.title,
                             description: data.data.description,
                             tag: data.data.tag,
-                        }
+                        },
                     })];
             case 2:
                 note = _a.sent();
@@ -180,14 +186,16 @@ router.put('/update/:id', authMiddleware_1.default, function (req, res) { return
                 return [3 /*break*/, 4];
             case 3:
                 error_4 = _a.sent();
-                res.status(500).json({ status: false, data: { message: "Internal Server Error!!" } });
+                res
+                    .status(500)
+                    .json({ status: false, data: { message: "Internal Server Error!!" } });
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
         }
     });
 }); });
 //get single note
-router.delete('/delete/:id', authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+router.delete("/delete/:id", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var note, error_5;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -195,31 +203,211 @@ router.delete('/delete/:id', authMiddleware_1.default, function (req, res) { ret
                 _a.trys.push([0, 3, , 4]);
                 return [4 /*yield*/, index_1.prisma.post.findUnique({
                         where: {
-                            id: req.params.id
-                        }
+                            id: req.params.id,
+                        },
                     })];
             case 1:
                 note = _a.sent();
                 if (!note) {
-                    return [2 /*return*/, res.status(404).json({ status: false, data: { message: "Post Not Found" } })];
+                    return [2 /*return*/, res
+                            .status(404)
+                            .json({ status: false, data: { message: "Post Not Found" } })];
                 }
                 if (note.userId !== req.user.id) {
-                    return [2 /*return*/, res.status(401).json({ status: false, data: { message: "Not Allowed!" } })];
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Not Allowed!" } })];
                 }
                 return [4 /*yield*/, index_1.prisma.post.delete({
                         where: {
-                            id: req.params.id
-                        }
+                            id: req.params.id,
+                        },
                     })];
             case 2:
                 note = _a.sent();
-                res.status(302).json({ status: true, data: { message: "Post deleted sucessfully!!" } });
+                res
+                    .status(302)
+                    .json({ status: true, data: { message: "Post deleted sucessfully!!" } });
                 return [3 /*break*/, 4];
             case 3:
                 error_5 = _a.sent();
-                res.status(500).send('Internal server error');
+                res
+                    .status(500)
+                    .json({ status: false, data: { message: "Internal Server Error!!" } });
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
+        }
+    });
+}); });
+router.post("/share", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var data, note, user, e_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 4, , 5]);
+                data = SharePostData.safeParse(req.body);
+                if (data.success === false) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Invalid Data!" } })];
+                }
+                return [4 /*yield*/, index_1.prisma.post.findUnique({
+                        where: {
+                            id: data.data.postId,
+                        },
+                    })];
+            case 1:
+                note = _a.sent();
+                if (!note) {
+                    return [2 /*return*/, res
+                            .status(404)
+                            .json({ status: false, data: { message: "Post Not Found" } })];
+                }
+                if (note.userId !== req.user.id) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Not Allowed!" } })];
+                }
+                return [4 /*yield*/, index_1.prisma.user.findUnique({
+                        where: {
+                            username: data.data.username,
+                        },
+                    })];
+            case 2:
+                user = _a.sent();
+                if (user === null) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "No user Found!" } })];
+                }
+                // if user wants to share with him/her self
+                if (user.id === req.user.id) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Can not share with yourself!!!" } })];
+                }
+                return [4 /*yield*/, index_1.prisma.sharedPost.create({
+                        data: {
+                            postId: data.data.postId,
+                            accessId: user.id,
+                        },
+                    })];
+            case 3:
+                _a.sent();
+                res
+                    .status(302)
+                    .json({ status: true, data: { message: "Post shared sucessfully!!" } });
+                return [3 /*break*/, 5];
+            case 4:
+                e_1 = _a.sent();
+                res
+                    .status(500)
+                    .json({ status: false, data: { message: "Internal Server Error!!" } });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); });
+router.get("/shared-with-me", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var response, ids, data, e_2;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 4, , 5]);
+                return [4 /*yield*/, index_1.prisma.sharedPost.findMany({
+                        where: {
+                            accessId: req.user.id
+                        }
+                    })];
+            case 1:
+                response = _a.sent();
+                ids = response.map(function (e) { return e.postId; });
+                if (!(ids.length > 0)) return [3 /*break*/, 3];
+                return [4 /*yield*/, index_1.prisma.post.findMany({
+                        where: {
+                            id: { in: ids }
+                        }
+                    })];
+            case 2:
+                data = _a.sent();
+                return [2 /*return*/, res
+                        .status(302)
+                        .json({ status: true, data: { message: data } })];
+            case 3:
+                res
+                    .status(302)
+                    .json({ status: true, data: { message: response } });
+                return [3 /*break*/, 5];
+            case 4:
+                e_2 = _a.sent();
+                res
+                    .status(500)
+                    .json({ status: false, data: { message: "Internal Server Error!!" } });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); });
+router.post("/unshare", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var data, user, resp, e_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 4, , 5]);
+                data = SharePostData.safeParse(req.body);
+                if (data.success === false) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Invalid Data!" } })];
+                }
+                return [4 /*yield*/, index_1.prisma.user.findUnique({
+                        where: {
+                            username: data.data.username,
+                        },
+                    })];
+            case 1:
+                user = _a.sent();
+                if (user === null) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "No user Found!" } })];
+                }
+                return [4 /*yield*/, index_1.prisma.sharedPost.findUnique({
+                        where: {
+                            accessId_postId: {
+                                accessId: user.id,
+                                postId: data.data.postId,
+                            }
+                        }
+                    })];
+            case 2:
+                resp = _a.sent();
+                if (resp === null) {
+                    return [2 /*return*/, res
+                            .status(401)
+                            .json({ status: false, data: { message: "Post not shared with the user" } })];
+                }
+                return [4 /*yield*/, index_1.prisma.sharedPost.delete({
+                        where: {
+                            accessId_postId: {
+                                accessId: user.id,
+                                postId: data.data.postId,
+                            }
+                        }
+                    })];
+            case 3:
+                resp = _a.sent();
+                res
+                    .status(302)
+                    .json({ status: true, data: { message: "Post unshared sucessfully!!" } });
+                return [3 /*break*/, 5];
+            case 4:
+                e_3 = _a.sent();
+                res
+                    .status(500)
+                    .json({ status: false, data: { message: "Internal Server Error!!" } });
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
         }
     });
 }); });

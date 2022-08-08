@@ -44,7 +44,7 @@ function signToken(payload) {
         var token;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, jsonwebtoken_1.sign)(payload, SECRET_KEY, { algorithm: "HS256", expiresIn: "1h" })];
+                case 0: return [4 /*yield*/, (0, jsonwebtoken_1.sign)(payload, SECRET_KEY, { algorithm: "HS256", expiresIn: "2h" })];
                 case 1:
                     token = _a.sent();
                     return [2 /*return*/, token];

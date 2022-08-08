@@ -81,6 +81,7 @@ router.post("/login", function (req, res) { return __awaiter(void 0, void 0, voi
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                console.log('req came');
                 data = loginData.safeParse(req.body);
                 if (data.success === false) {
                     return [2 /*return*/, res
@@ -116,7 +117,10 @@ router.post("/login", function (req, res) { return __awaiter(void 0, void 0, voi
                 return [4 /*yield*/, (0, signToken_1.signToken)(payload)];
             case 3:
                 token = _a.sent();
-                return [2 /*return*/, res.json({ status: true, data: { token: token, user: payload.user } })];
+                // res.setHeader("Set-Cookie", [`Authorization=${token}`]);
+                res.cookie("Authorization", token, { domain: "http://localhost:5000", sameSite: "none", secure: true, path: "/" });
+                res.json({ status: true, data: { token: token } });
+                return [2 /*return*/];
         }
     });
 }); });
@@ -166,11 +170,12 @@ router.post("/signup", function (req, res) { return __awaiter(void 0, void 0, vo
                 return [4 /*yield*/, (0, signToken_1.signToken)(payload)];
             case 4:
                 token = _e.sent();
-                return [2 /*return*/, res.json({ status: true, data: { token: token, user: payload.user } })];
+                res.cookie('Authorization', token, { httpOnly: true, sameSite: true, secure: false, maxAge: 6 * 60 * 60 * 1000, });
+                return [2 /*return*/, res.json({ status: true, data: { token: token } })];
         }
     });
 }); });
-router.post("/forgot-password", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+router.post("/change-password", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var umail, _a, _b, e_1;
     var _c, _d;
     return __generator(this, function (_e) {
@@ -178,8 +183,7 @@ router.post("/forgot-password", authMiddleware_1.default, function (req, res) { 
             case 0:
                 umail = req.user.email;
                 if (!req.body.password) {
-                    res.json({ status: false, data: { message: "Invalid Password!!" } });
-                    return [2 /*return*/];
+                    return [2 /*return*/, res.json({ status: false, data: { message: "Password can not be null!!" } })];
                 }
                 _e.label = 1;
             case 1:
@@ -197,7 +201,7 @@ router.post("/forgot-password", authMiddleware_1.default, function (req, res) { 
                         _c)])];
             case 3:
                 _e.sent();
-                res.json({ status: true, data: { message: "Password changed!!" } });
+                res.json({ status: true, data: { message: "Password changed sucessfully!!" } });
                 return [3 /*break*/, 5];
             case 4:
                 e_1 = _e.sent();
@@ -208,26 +212,48 @@ router.post("/forgot-password", authMiddleware_1.default, function (req, res) { 
     });
 }); });
 router.delete("/account", authMiddleware_1.default, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var deleteUser, e_2;
+    var posts, ids, e_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 2, , 3]);
+                _a.trys.push([0, 5, , 6]);
+                return [4 /*yield*/, index_1.prisma.post.findMany({
+                        where: {
+                            userId: req.user.id,
+                        }
+                    })];
+            case 1:
+                posts = _a.sent();
+                ids = posts.map(function (p) { return p.id; });
+                return [4 /*yield*/, index_1.prisma.sharedPost.deleteMany({
+                        where: {
+                            postId: { in: ids }
+                        }
+                    })];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, index_1.prisma.post.deleteMany({
+                        where: {
+                            userId: req.user.id,
+                        }
+                    })];
+            case 3:
+                _a.sent();
                 return [4 /*yield*/, index_1.prisma.user.delete({
                         where: {
                             email: req.user.email,
                         },
                     })];
-            case 1:
-                deleteUser = _a.sent();
-                console.log(deleteUser);
+            case 4:
+                _a.sent();
+                res.cookie('Authorization', 'delted', { httpOnly: true, sameSite: true, secure: true });
                 res.json({ status: true, data: { message: "User Deleted!!" } });
-                return [3 /*break*/, 3];
-            case 2:
+                return [3 /*break*/, 6];
+            case 5:
                 e_2 = _a.sent();
                 res.json({ status: false, data: { message: e_2 } });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
         }
     });
 }); });

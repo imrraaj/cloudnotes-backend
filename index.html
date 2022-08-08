@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <button onclick="Login()">Login</button>
+    <button onclick="POST()">post</button>
+    <script>
+        async function Login() {
+            let res = await fetch('http://localhost:5000/auth/login', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    username: "sanskartrvd",
+                    password: "sanskartrvd",
+                    email: "sanskartrvd@gmail.com",
+                })
+            });
+            res = await res.json();
+            console.log(res.data.token);
+            document.cookie = `Authorization=${res.data.token}; Domain=http://localhost:5000`
+        }
+
+
+
+        async function POST() {
+            let res = await fetch('http://localhost:5000/api/all', {
+                method: "GET",
+                headers: {
+                    "Authorization": document.cookie.split("=")[1],
+                    "Content-Type": "application/json",
+                }
+            });
+            res = await res.json();
+            console.log(res);
+        }
+    </script>
+</body>
+
+</html>

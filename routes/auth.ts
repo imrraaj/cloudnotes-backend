@@ -6,7 +6,6 @@ import AuthMiddleware from "../middleware/authMiddleware";
 import { signToken } from "../utils/signToken"
 import { Req } from "../utils/types";
 
-
 const router: Router = express.Router();
 
 
@@ -43,6 +42,7 @@ const signupData = z.object({
 });
 
 router.post("/login", async (req: Request, res: Response) => {
+    console.log('req came');
     const data = loginData.safeParse(req.body);
     if (data.success === false) {
         return res
@@ -77,11 +77,12 @@ router.post("/login", async (req: Request, res: Response) => {
         },
     };
 
-    const token = await signToken(payload)
-    return res.json({ status: true, data: { token, user: payload.user } });
+    const token = await signToken(payload);
+    // res.setHeader("Set-Cookie", [`Authorization=${token}`]);
+    res.cookie("Authorization", token, { domain: "http://localhost:5000", sameSite: "none", secure: true, path: "/" })
+    res.json({ status: true, data: { token } });
+    return;
 });
-
-
 
 router.post("/signup", async (req: Request, res: Response) => {
     const data = signupData.safeParse(req.body);
@@ -120,19 +121,20 @@ router.post("/signup", async (req: Request, res: Response) => {
         },
     };
 
-    const token = await signToken(payload)
-    return res.json({ status: true, data: { token, user: payload.user } });
+    const token = await signToken(payload);
+    res.cookie('Authorization', token, { httpOnly: true, sameSite: true, secure: false, maxAge: 6 * 60 * 60 * 1000, });
+    return res.json({ status: true, data: { token } });
 });
 
 
 
 
 
-router.post("/forgot-password", AuthMiddleware, async (req: Req, res: any) => {
+router.post("/change-password", AuthMiddleware, async (req: Req, res: any) => {
     const umail = req.user.email;
-    if(!req.body.password){
-        res.json({ status: false, data: { message: "Invalid Password!!" } });
-        return;
+
+    if (!req.body.password) {
+        return res.json({ status: false, data: { message: "Password can not be null!!" } });
     }
 
     try {
@@ -144,7 +146,7 @@ router.post("/forgot-password", AuthMiddleware, async (req: Req, res: any) => {
                 password: await hash(req.body.password, 10),
             },
         });
-        res.json({ status: true, data: { message: "Password changed!!" } });
+        res.json({ status: true, data: { message: "Password changed sucessfully!!" } });
     } catch (e) {
         res.json({ status: false, data: { message: e } });
     }
@@ -156,13 +158,33 @@ router.post("/forgot-password", AuthMiddleware, async (req: Req, res: any) => {
 
 router.delete("/account", AuthMiddleware, async (req: Req, res: any) => {
     try {
-        const deleteUser = await prisma.user.delete({
+        const posts = await prisma.post.findMany({
+            where: {
+                userId: req.user.id,
+            }
+        });
+
+        const ids = posts.map(p => p.id);
+        await prisma.sharedPost.deleteMany({
+            where: {
+                postId: { in: ids }
+            }
+        })
+        await prisma.post.deleteMany({
+            where: {
+                userId: req.user.id,
+            }
+        })
+        await prisma.user.delete({
             where: {
                 email: req.user.email,
             },
         });
 
-        console.log(deleteUser);
+
+
+
+        res.cookie('Authorization', 'delted', { httpOnly: true, sameSite: true, secure: true });
         res.json({ status: true, data: { message: "User Deleted!!" } });
     } catch (e) {
         res.json({ status: false, data: { message: e } });
